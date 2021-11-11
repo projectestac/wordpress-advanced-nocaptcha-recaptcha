@@ -12,6 +12,14 @@ class ANR_Settings {
 	}
 
 	function actions_filters() {
+
+        // XTEC ************ AFEGIT - Allow access only to the xtecadmin
+        // 2021.11.11 @aginard
+        if (!is_xtecadmin()) {
+            return;
+        }
+        // ************ FI
+
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
 		add_action( 'admin_init', array( $this, 'settings_save' ), 99 );
 		add_filter( 'plugin_action_links_' . plugin_basename( ANR_PLUGIN_FILE ), array( $this, 'add_settings_link' ) );
