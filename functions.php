@@ -77,6 +77,17 @@ function anr_plugin_update_51( $prev_version ) {
 
 function anr_get_option( $option, $default = '', $section = 'anr_admin_options' ) {
 
+    // XTEC ************ AFEGIT - Fill the recaptcha site key and secret key with the global values
+    // 2021.11.11 @aginard
+    if ($option === 'site_key') {
+        global $agora;
+        return $agora['recaptchapublickey'];
+    } elseif ($option === 'secret_key') {
+        global $agora;
+        return $agora['recaptchaprivatekey'];
+    }
+    // ************ FI
+
 	if ( anr_same_settings_for_all_sites() ) {
 		$options = get_site_option( $section );
 	} else {
