@@ -879,6 +879,14 @@ class C4WP_Settings {
 	 * @return void
 	 */
 	public static function menu_page() {
+
+        // XTEC ************ AFEGIT - Allow access only to xtecadmin to admin pages.
+        // 2021.11.11 @aginard
+        if (!is_xtec_super_admin()) {
+            return;
+        }
+        // ************ FI
+
 		$icon_url = C4WP_PLUGIN_URL . 'assets/img/20x20-icon.png';
 		add_menu_page( esc_html__( 'CAPTCHA Configuration', 'advanced-nocaptcha-recaptcha' ), esc_html__( 'CAPTCHA 4WP', 'advanced-nocaptcha-recaptcha' ), 'manage_options', 'c4wp-admin-captcha', array( __CLASS__, 'admin_settings' ), $icon_url, 99 );
 		$hook_captcha_submenu  = add_submenu_page( 'c4wp-admin-captcha', esc_html__( 'CAPTCHA Configuration', 'advanced-nocaptcha-recaptcha' ), esc_html__( 'CAPTCHA Configuration', 'advanced-nocaptcha-recaptcha' ), 'manage_options', 'c4wp-admin-captcha', array( __CLASS__, 'admin_settings' ), 0 );
