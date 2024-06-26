@@ -69,7 +69,7 @@ class C4WP_Settings {
 
 		add_action( 'admin_notices', array( __CLASS__, 'v3_fallback_notice' ) );
 
-		add_filter( 'c4wp_settings_fields', array( __CLASS__, 'add_delete_data_settings' ), 25 );
+		add_filter( 'c4wp_settings_fields_after', array( __CLASS__, 'add_delete_data_settings' ), 25 );
 	}
 
 	/**
@@ -149,6 +149,9 @@ class C4WP_Settings {
 			if ( in_array( $field_id, $skip ) ) {
 				continue;
 			}
+			if ( ! empty( $field['sub_section'] ) ) {
+				$field['class'] = $field['class'] . ' sub-section-' . $field['sub_section'];
+			}
 			add_settings_field( $field['id'], $field['label'], ! empty( $field['callback'] ) ? $field['callback'] : array( __CLASS__, 'callback' ), 'c4wp_admin_options', $field['section_id'], $field );
 		}
 	}
@@ -178,13 +181,22 @@ class C4WP_Settings {
 			),
 		);
 
-		$settings_sections = array(
+		$forms_settings_sections = array(
 			'forms' => array(
 				'section_title'    => '',
 				'section_callback' => function() {
+					$settings_tabs = array(
+						'<a style="margin-left: 1px" href="?page=c4wp-admin-forms&tab=forms-placements" class="nav-tab">Forms & Placements</a>');
+			
+					$settings_tabs = apply_filters( 'c4wp_forms_area_tabs', $settings_tabs );
+
 					echo '<span style="margin-top: 10px; display: block;">';
-					esc_html_e( 'In this page you can configure where on your website you want to add the CAPTCHA check. You can also configure several other settings, such as whitelisting IP addresses, excluding logged in users from CAPTCHA checks and more.', 'advanced-nocaptcha-recaptcha' );
-					echo '</span>';
+					esc_html_e( 'In this page you can configure where on your website you want to add the CAPTCHA check.', 'advanced-nocaptcha-recaptcha' );
+					echo '</span><br>';
+
+					if ( count( $settings_tabs ) > 1 ) {
+						echo '<nav class="nav-tab-wrapper c4wp-settings-tab-wrapper">' . implode( '', $settings_tabs ) . '</nav>';
+					}
 				},
 			),
 			'other' => array(
@@ -192,7 +204,39 @@ class C4WP_Settings {
 			),
 		);
 
-		$sections = ( 'c4wp-admin-captcha' === $section_we_want ) ? $captcha_sections : $settings_sections;
+		
+
+		$settings_sections = array(
+			'settings' => array(
+				'section_title'    => '',
+				'section_callback' => function() {
+					$settings_tabs = array(
+						'<a href="?page=c4wp-admin-settings&tab=general-settings" class="nav-tab">General Settings</a>'
+					);
+			
+					$settings_tabs = apply_filters( 'c4wp_settings_area_tabs', $settings_tabs );
+
+					echo '<span style="margin-top: 10px; display: block;">';
+					esc_html_e( 'In this page you can configure several settings, such as whitelisting IP addresses, excluding logged in users from CAPTCHA checks and more.', 'advanced-nocaptcha-recaptcha' );
+					echo '</span><br>';
+
+					if ( count( $settings_tabs ) > 1 ) {
+						echo '<nav class="nav-tab-wrapper c4wp-settings-tab-wrapper">' . implode( '', $settings_tabs ) . '</nav>';
+					}
+				},
+			),
+			'other' => array(
+				'section_title' => '',
+			),
+		);
+
+		$sections = $captcha_sections;
+		if ( 'c4wp-admin-forms' === $section_we_want ) {
+			$sections = $forms_settings_sections;
+		} elseif ( 'c4wp-admin-settings' === $section_we_want ) {
+			$sections = $settings_sections;
+		}
+
 		return apply_filters( 'c4wp_settings_sections', $sections );
 	}
 
@@ -232,6 +276,17 @@ class C4WP_Settings {
 		if ( defined( 'JETPACK__VERSION' ) ) {
 			$comment_form_label .= ' ' . esc_html__( '(Incompatible with Jetpack comments)', 'advanced-nocaptcha-recaptcha' ) . '';
 		}
+
+		$comment_admin_url = ( function_exists( 'c4wp_same_settings_for_all_sites' ) || ! function_exists( 'c4wp_same_settings_for_all_sites' ) && is_multisite() ) ? network_admin_url( 'options-discussion.php' ) : admin_url( 'options-discussion.php' );
+
+		$dissallowed_preamble_desc = esc_html__( 'When a comment contains any of these words in its content, author name, URL, email, IP address, or browser’s user agent string, it will be put in the Trash. One word or IP address per line. It will match inside words, so “press” will match “WordPress”.
+
+		', 'advanced-nocaptcha-recaptcha' );
+		$dissallowed_preamble_desc .= sprintf(
+			/* translators:link to upgrade page */
+			__( 'This setting and more can be adjusted in your %s', 'advanced-nocaptcha-recaptcha' ),
+			'<a target="_blank" rel="noopener noreferrer" href="' . esc_url( $comment_admin_url ) . '">' . esc_html__( 'Discussion settings', 'advanced-nocaptcha-recaptcha' ) . '</a>'
+		);
 
 		$fields = array(
 			'captcha_version_title'  => array(
@@ -371,7 +426,7 @@ class C4WP_Settings {
 				'section_id' => 'google_keys',
 				'type'       => 'select',
 				'std'        => 'en',
-				'class'      => 'regular lang_select',
+				'class'      => 'regular lang_select hide-if-disabled toggleable',
 				'options'    => array(
 					'ar'     => esc_html__( 'Arabic', 'advanced-nocaptcha-recaptcha' ),
 					'bg'     => esc_html__( 'Bulgarian', 'advanced-nocaptcha-recaptcha' ),
@@ -419,6 +474,38 @@ class C4WP_Settings {
 					'tr'     => esc_html__( 'Turkish', 'advanced-nocaptcha-recaptcha' ),
 					'uk'     => esc_html__( 'Ukrainian', 'advanced-nocaptcha-recaptcha' ),
 					'vi'     => esc_html__( 'Vietnamese', 'advanced-nocaptcha-recaptcha' ),
+				),
+			),
+			'language_cloudflare' => array(
+				'label'      => '',
+				'section_id' => 'google_keys',
+				'type'       => 'select',
+				'std'        => 'en',
+				'class'      => 'regular lang_select hide-if-disabled toggleable c4wp-show-field-for-cloudflare',
+				'options'    => array(
+					'ar-eg'     => esc_html__( 'Arabic (Egypt)', 'advanced-nocaptcha-recaptcha' ),
+					'ar'     => esc_html__( 'Arabic', 'advanced-nocaptcha-recaptcha' ),
+					'de'     => esc_html__( 'German', 'advanced-nocaptcha-recaptcha' ),
+					'en'     => esc_html__( 'English (US)', 'advanced-nocaptcha-recaptcha' ),
+					'es'     => esc_html__( 'Spanish', 'advanced-nocaptcha-recaptcha' ),
+					'fa'     => esc_html__( 'Persian', 'advanced-nocaptcha-recaptcha' ),
+					'fr'     => esc_html__( 'French', 'advanced-nocaptcha-recaptcha' ),
+					'id'     => esc_html__( 'Indonesian', 'advanced-nocaptcha-recaptcha' ),
+					'it'     => esc_html__( 'Italian', 'advanced-nocaptcha-recaptcha' ),
+					'ja'     => esc_html__( 'Japanese', 'advanced-nocaptcha-recaptcha' ),
+					'ko'     => esc_html__( 'Korean', 'advanced-nocaptcha-recaptcha' ),
+					'nl'     => esc_html__( 'Dutch', 'advanced-nocaptcha-recaptcha' ),
+					'pl'     => esc_html__( 'Polish', 'advanced-nocaptcha-recaptcha' ),
+					'pt'     => esc_html__( 'Portuguese', 'advanced-nocaptcha-recaptcha' ),
+					'pt-br'  => esc_html__( 'Portuguese (Brazil)', 'advanced-nocaptcha-recaptcha' ),
+					'ru'     => esc_html__( 'Russian', 'advanced-nocaptcha-recaptcha' ),
+					'tlh'    => esc_html__( 'Klingon', 'advanced-nocaptcha-recaptcha' ),
+					'tr'     => esc_html__( 'Turkish', 'advanced-nocaptcha-recaptcha' ),
+					'uk'     => esc_html__( 'Ukrainian', 'advanced-nocaptcha-recaptcha' ),
+					'uk-ua'  => esc_html__( 'Ukrainian (Ukraine)', 'advanced-nocaptcha-recaptcha' ),
+					'zh'     => esc_html__( 'Chinese', 'advanced-nocaptcha-recaptcha' ),
+					'zh-cm'  => esc_html__( 'Chinese (Simplified)', 'advanced-nocaptcha-recaptcha' ),
+					'zh-tw'  => esc_html__( 'Chinese (Traditional)', 'advanced-nocaptcha-recaptcha' ),
 				),
 			),
 			'error_message'          => array(
@@ -478,7 +565,7 @@ class C4WP_Settings {
 				'label'      => esc_html__( 'reCAPTCHA domain', 'advanced-nocaptcha-recaptcha' ),
 				'section_id' => 'google_keys',
 				'type'       => 'select',
-				'class'      => 'regular',
+				'class'      => 'regular toggleable c4wp-google-only-setting',
 				'std'        => C4WP_Functions::c4wp_recaptcha_domain(),
 				'options'    => array(
 					'google.com'    => 'google.com',
@@ -491,7 +578,7 @@ class C4WP_Settings {
 				'label'      => esc_html__( 'Remove CSS', 'advanced-nocaptcha-recaptcha' ),
 				'section_id' => 'google_keys',
 				'type'       => 'checkbox',
-				'class'      => 'checkbox toggleable disabled c4wp-show-field-for-v2_checkbox',
+				'class'      => 'checkbox',
 				'cb_label'   => esc_html__( "Remove this plugin's css from login page?", 'advanced-nocaptcha-recaptcha' ),
 				'desc'       => __( 'This css increase login page width to adjust with Captcha width.', 'advanced-nocaptcha-recaptcha' ),
 			),
@@ -537,6 +624,7 @@ class C4WP_Settings {
 			// Settings.
 			'enabled_forms_title'    => array(
 				'section_id' => 'forms',
+				'sub_section' => 'forms-placements',
 				'type'       => 'html',
 				'label'      => sprintf(
 					'<strong style="position: absolute;">%1$s</strong>',
@@ -545,6 +633,7 @@ class C4WP_Settings {
 			),
 			'enabled_forms_subtitle' => array(
 				'section_id' => 'forms',
+				'sub_section' => 'forms-placements',
 				'type'       => 'html',
 				'label'      => sprintf(
 					'<p class="description c4wp-desc" style="position: absolute;">%1$s</p>',
@@ -555,6 +644,7 @@ class C4WP_Settings {
 			'enabled_forms'          => array(
 				'label'      => esc_html__( 'WordPress pages', 'advanced-nocaptcha-recaptcha' ),
 				'section_id' => 'forms',
+				'sub_section' => 'forms-placements',
 				'type'       => 'multicheck',
 				'class'      => 'checkbox',
 				'options'    => array(
@@ -565,16 +655,86 @@ class C4WP_Settings {
 					'comment'        => $comment_form_label,
 				),
 			),
+			'comment_disallowed_keys_title'    => array(
+				'section_id' => 'forms',
+				'sub_section' => 'comment-form-settings',
+				'type'       => 'html',
+				'label'      => sprintf(
+					'<strong style="position: absolute;">%1$s</strong>',
+					esc_html__( 'Further protection of your comments form', 'advanced-nocaptcha-recaptcha' )
+				),
+			),
+			'comment_disallowed_keys_subtitle' => array(
+				'section_id' => 'forms',
+				'sub_section' => 'comment-form-settings',
+				'type'       => 'html',
+				'label'      => sprintf(
+					'<p class="description c4wp-desc" style="position: absolute;">%1$s</p>',
+					$dissallowed_preamble_desc
+				),
+				'class'      => 'wrap-around-content',
+			),		
 		);
 
 		$fields = apply_filters( 'c4wp_settings_fields', $fields );
+
+		$result  = array_filter( $fields, function( $key ) {
+			if ( $key == 'enabled_forms_title' || $key == 'enabled_forms_subtitle'|| $key == 'enabled_forms_wc' ) {
+				return false;
+			} else {
+				return strpos( $key, 'enabled_forms_' ) === 0;
+			}
+		 }, ARRAY_FILTER_USE_KEY);
+
+		$keys = array_keys( $result );
+		asort( $keys );
+
+		foreach( $keys as $key ) {
+			$val = $fields[ $key ];
+			unset($fields[ $key ]);
+			$fields[ $key ] = $val;
+		}
+
+		$fields = apply_filters( 'c4wp_settings_fields_after', $fields );
+
+		$geo_settings = array( 
+			'denied_countries_title',
+			'denied_countries_subtitle',
+			'denied_countries_method',
+			'denied_countries_input',
+			'denied_countries',
+			'denied_countries_allowed_input',
+			'allowed_countries'
+		);
+
+		foreach ( $geo_settings as $key ) {
+			if ( isset( $fields[ $key ] ) ) {
+				$val = $fields[ $key ];
+				unset($fields[ $key ]);
+				$fields[ $key ] = $val;
+			}
+		}
+
+		if ( is_multisite() ) {
+			$additonal_ms_options['enabled_forms_ms'] = array(
+				'label'      => esc_html__( 'Multisite pages', 'advanced-nocaptcha-recaptcha' ),
+				'section_id' => 'forms',
+				'sub_section' => 'forms-placements',
+				'type'       => 'multicheck',
+				'class'      => 'checkbox',
+				'options'    => array(
+					'ms_user_signup'       => esc_html__( 'Multisite Signup form', 'advanced-nocaptcha-recaptcha' ),
+				),
+			);	
+			$fields = \C4WP_Settings::push_at_to_associative_array( $fields, 'enabled_forms_subtitle', $additonal_ms_options );	
+		}
 
 		if ( ! C4WP_Functions::c4wp_is_premium_version() ) :
 
 			$features_url                  = method_exists( 'C4WP\\C4WP_Functions', 'c4wp_same_settings_for_all_sites' ) && C4WP_Functions::c4wp_same_settings_for_all_sites() ? network_admin_url( 'admin.php?page=c4wp-admin-upgrade' ) : admin_url( 'admin.php?page=c4wp-admin-upgrade' );
 			$logos_url                     = C4WP_PLUGIN_URL . 'assets/img/third-party-logos.png';
 			$premium_area['premium_title'] = array(
-				'section_id' => 'forms',
+				'section_id' => 'settings',
 				'type'       => 'html',
 				'class'      => 'premium-title-wrapper h-140',
 				'label'      => sprintf(
@@ -594,8 +754,6 @@ class C4WP_Settings {
 			$fields = self::push_at_to_associative_array( $fields, array_key_last( $fields ), $premium_area );
 		endif;
 
-		
-
 		foreach ( $fields as $field_id => $field ) {
 			$fields[ $field_id ] = wp_parse_args(
 				$field,
@@ -608,10 +766,12 @@ class C4WP_Settings {
 					'class'          => 'regular-text',
 					'el_class'       => 'regular',
 					'section_id'     => '',
+					'sub_section'    => '',
 					'desc'           => '',
 					'std'            => '',
 					'min_val'        => '',
 					'max_val'        => '',
+					'minlength'      => '',
 				)
 			);
 		}
@@ -882,7 +1042,8 @@ class C4WP_Settings {
 		$icon_url = C4WP_PLUGIN_URL . 'assets/img/20x20-icon.png';
 		add_menu_page( esc_html__( 'CAPTCHA Configuration', 'advanced-nocaptcha-recaptcha' ), esc_html__( 'CAPTCHA 4WP', 'advanced-nocaptcha-recaptcha' ), 'manage_options', 'c4wp-admin-captcha', array( __CLASS__, 'admin_settings' ), $icon_url, 99 );
 		$hook_captcha_submenu  = add_submenu_page( 'c4wp-admin-captcha', esc_html__( 'CAPTCHA Configuration', 'advanced-nocaptcha-recaptcha' ), esc_html__( 'CAPTCHA Configuration', 'advanced-nocaptcha-recaptcha' ), 'manage_options', 'c4wp-admin-captcha', array( __CLASS__, 'admin_settings' ), 0 );
-		$hook_settings_submenu = add_submenu_page( 'c4wp-admin-captcha', esc_html__( 'CAPTCHA 4WP Settings', 'advanced-nocaptcha-recaptcha' ), esc_html__( 'Settings & Placements', 'advanced-nocaptcha-recaptcha' ), 'manage_options', 'c4wp-admin-settings', array( __CLASS__, 'admin_settings' ), 1 );
+		$hook_forms_settings_submenu = add_submenu_page( 'c4wp-admin-captcha', esc_html__( 'CAPTCHA 4WP Forms', 'advanced-nocaptcha-recaptcha' ), esc_html__( 'Form Placements', 'advanced-nocaptcha-recaptcha' ), 'manage_options', 'c4wp-admin-forms', array( __CLASS__, 'admin_settings' ), 1 );
+		$hook_settings_submenu = add_submenu_page( 'c4wp-admin-captcha', esc_html__( 'CAPTCHA 4WP Settings', 'advanced-nocaptcha-recaptcha' ), esc_html__( 'Settings', 'advanced-nocaptcha-recaptcha' ), 'manage_options', 'c4wp-admin-settings', array( __CLASS__, 'admin_settings' ), 2 );
 		$hook_help_submenu     = add_submenu_page( 'c4wp-admin-captcha', esc_html__( 'Help & Contact Us', 'advanced-nocaptcha-recaptcha' ), esc_html__( 'Help & Contact Us', 'advanced-nocaptcha-recaptcha' ), 'manage_options', 'c4wp-admin-help', array( __CLASS__, 'admin_settings' ), 5 );
 
 		if ( ! function_exists( 'c4wp_fs' ) || function_exists( 'c4wp_fs' ) && c4wp_fs()->is_not_paying() ) {
@@ -893,6 +1054,7 @@ class C4WP_Settings {
 		add_action( "load-$hook_captcha_submenu", array( __CLASS__, 'c4wp_admin_page_enqueue_scripts' ) );
 		add_action( "load-$hook_help_submenu", array( __CLASS__, 'c4wp_admin_page_enqueue_scripts' ) );
 		add_action( "load-$hook_settings_submenu", array( __CLASS__, 'c4wp_admin_page_enqueue_scripts' ) );
+		add_action( "load-$hook_forms_settings_submenu", array( __CLASS__, 'c4wp_admin_page_enqueue_scripts' ) );
 	}
 
 	/**
@@ -901,9 +1063,11 @@ class C4WP_Settings {
 	 * @return void
 	 */
 	public static function network_menu_page() {
-		add_menu_page( esc_html__( 'CAPTCHA Configuration', 'advanced-nocaptcha-recaptcha' ), esc_html__( 'CAPTCHA 4WP', 'advanced-nocaptcha-recaptcha' ), 'manage_network_options', 'c4wp-admin-captcha', array( __CLASS__, 'admin_settings' ), '', 99 );
+		$icon_url = C4WP_PLUGIN_URL . 'assets/img/20x20-icon.png';
+		add_menu_page( esc_html__( 'CAPTCHA Configuration', 'advanced-nocaptcha-recaptcha' ), esc_html__( 'CAPTCHA 4WP', 'advanced-nocaptcha-recaptcha' ), 'manage_network_options', 'c4wp-admin-captcha', array( __CLASS__, 'admin_settings' ), $icon_url, 99 );
 		$hook_captcha_submenu  = add_submenu_page( 'c4wp-admin-captcha', esc_html__( 'CAPTCHA Configuration', 'advanced-nocaptcha-recaptcha' ), esc_html__( 'CAPTCHA Configuration', 'advanced-nocaptcha-recaptcha' ), 'manage_network_options', 'c4wp-admin-captcha', array( __CLASS__, 'admin_settings' ), 0 );
-		$hook_settings_submenu = add_submenu_page( 'c4wp-admin-captcha', esc_html__( 'CAPTCHA 4WP Settings', 'advanced-nocaptcha-recaptcha' ), esc_html__( 'Settings & Placements', 'advanced-nocaptcha-recaptcha' ), 'manage_network_options', 'c4wp-admin-settings', array( __CLASS__, 'admin_settings' ), 1 );
+		$hook_forms_settings_submenu = add_submenu_page( 'c4wp-admin-captcha', esc_html__( 'CAPTCHA 4WP Forms', 'advanced-nocaptcha-recaptcha' ), esc_html__( 'Form Placements', 'advanced-nocaptcha-recaptcha' ), 'manage_network_options', 'c4wp-admin-forms', array( __CLASS__, 'admin_settings' ), 1 );
+		$hook_settings_submenu = add_submenu_page( 'c4wp-admin-captcha', esc_html__( 'CAPTCHA 4WP Settings', 'advanced-nocaptcha-recaptcha' ), esc_html__( 'Settings', 'advanced-nocaptcha-recaptcha' ), 'manage_network_options', 'c4wp-admin-settings', array( __CLASS__, 'admin_settings' ), 2 );
 		$hook_help_submenu     = add_submenu_page( 'c4wp-admin-captcha', esc_html__( 'Help & Contact Us', 'advanced-nocaptcha-recaptcha' ), esc_html__( 'Help & Contact Us', 'advanced-nocaptcha-recaptcha' ), 'manage_network_options', 'c4wp-admin-help', array( __CLASS__, 'admin_settings' ), 5 );
 
 		if ( ! function_exists( 'c4wp_fs' ) || function_exists( 'c4wp_fs' ) && c4wp_fs()->is_not_paying() ) {
@@ -914,6 +1078,7 @@ class C4WP_Settings {
 		add_action( "load-$hook_captcha_submenu", array( __CLASS__, 'c4wp_admin_page_enqueue_scripts' ) );
 		add_action( "load-$hook_help_submenu", array( __CLASS__, 'c4wp_admin_page_enqueue_scripts' ) );
 		add_action( "load-$hook_settings_submenu", array( __CLASS__, 'c4wp_admin_page_enqueue_scripts' ) );
+		add_action( "load-$hook_forms_settings_submenu", array( __CLASS__, 'c4wp_admin_page_enqueue_scripts' ) );
 	}
 
 	/**
@@ -933,7 +1098,8 @@ class C4WP_Settings {
 	 */
 	public static function settings_save() {
 		if ( current_user_can( 'manage_options' ) && isset( $_POST['c4wp_admin_options'] ) && isset( $_POST['action'] ) && 'update' === $_POST['action'] && isset( $_GET['page'] ) && 'c4wp-admin-settings' === $_GET['page'] ||
-		current_user_can( 'manage_options' ) && isset( $_POST['c4wp_admin_options'] ) && isset( $_POST['action'] ) && 'update' === $_POST['action'] && isset( $_GET['page'] ) && 'c4wp-admin-captcha' === $_GET['page'] ) {
+		current_user_can( 'manage_options' ) && isset( $_POST['c4wp_admin_options'] ) && isset( $_POST['action'] ) && 'update' === $_POST['action'] && isset( $_GET['page'] ) && 'c4wp-admin-captcha' === $_GET['page'] ||
+		current_user_can( 'manage_options' ) && isset( $_POST['c4wp_admin_options'] ) && isset( $_POST['action'] ) && 'update' === $_POST['action'] && isset( $_GET['page'] ) && 'c4wp-admin-forms' === $_GET['page'] ) {
 			check_admin_referer( 'c4wp_admin_options-options' );
 
 			$post_array = filter_input_array( INPUT_POST );
@@ -1029,6 +1195,8 @@ class C4WP_Settings {
 				if ( 'c4wp-admin-captcha' === $current_tab ) {
 					esc_html_e( 'CAPTCHA integration & configuration', 'advanced-nocaptcha-recaptcha' );
 				} elseif ( 'c4wp-admin-settings' === $current_tab ) {
+					esc_html_e( 'CAPTCHA Settings', 'advanced-nocaptcha-recaptcha' );
+				} elseif ( 'c4wp-admin-forms' === $current_tab ) {
 					esc_html_e( 'CAPTCHA Placements', 'advanced-nocaptcha-recaptcha' );
 				}
 				?>
@@ -1046,7 +1214,7 @@ class C4WP_Settings {
 							</div>
 						</div>
 							<?php
-							if ( 'c4wp-admin-captcha' === $current_tab || 'c4wp-admin-settings' === $current_tab ) {
+							if ( 'c4wp-admin-captcha' === $current_tab || 'c4wp-admin-settings' === $current_tab || 'c4wp-admin-forms' === $current_tab ) {
 								self::settings_form();
 							} elseif ( 'c4wp-admin-help' === $current_tab ) {
 								self::display_help_page();
@@ -1081,7 +1249,7 @@ class C4WP_Settings {
 
 		?>
 			<?php self::c4wp_settings_notice(); ?>
-			<form method="post" action="">
+			<form method="post" action="" class="c4wp-admin-wrapper">
 				<?php
 				settings_fields( 'c4wp_admin_options' );
 				do_settings_sections( 'c4wp_admin_options' );
@@ -1152,12 +1320,11 @@ class C4WP_Settings {
 								<li class="dashicons-before dashicons-yes-alt"> ' . esc_html__( 'Exempt logged in users, IP addresses and specific URLs from CAPTCHA checks.', 'advanced-nocaptcha-recaptcha' ) . '</li>
 								<li class="dashicons-before dashicons-yes-alt"> ' . esc_html__( 'No Ads!', 'advanced-nocaptcha-recaptcha' ) . '</li>
 							</ul>
-							<p style="text-align: center; margin: auto"><a class="premium-link" href="%2$s" target="_blank">' . esc_html__( 'Get a FREE 14-day trial', 'advanced-nocaptcha-recaptcha' ) . '</a> <a class="premium-link-not-btn" href="%1$s" target="_blank">' . esc_html__( 'Upgrade to Premium', 'advanced-nocaptcha-recaptcha' ) . '</a></p>
+							<p style="text-align: center; margin: auto"><a class="premium-link" href="%1$s" target="_blank">' . esc_html__( 'Upgrade to Premium', 'advanced-nocaptcha-recaptcha' ) . '</a></p>
 						</div>
 					</div>
 				</div>',
-				esc_url( 'https://melapress.com/wordpress-captcha/pricing/?utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp' ),
-				function_exists( 'c4wp_fs' ) ? c4wp_fs()->get_upgrade_url() : 'https://melapress.com/wordpress-captcha/plugin-trial/?utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp'
+				esc_url( 'https://melapress.com/wordpress-captcha/pricing/?utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp' )
 			);
 		endif;
 		return $return;
@@ -1188,6 +1355,10 @@ class C4WP_Settings {
 				$errors[] = 'empty_secret_key';
 				unset( $value['secret_key'] );
 			}
+		}
+
+		if ( isset( $value['comment_disallowed_keys'] ) ) {
+			update_site_option( 'disallowed_keys', wp_kses_post( $value['comment_disallowed_keys'] ) );
 		}
 
 		// Let user know how it went.
@@ -1305,6 +1476,32 @@ class C4WP_Settings {
 		$show_wizard_intro = ( empty( C4WP_Functions::c4wp_get_option( 'captcha_version' ) ) && empty( $site_key ) && empty( $secret_key ) ) ? true : false;
 		$logo_url          = C4WP_PLUGIN_URL . 'assets/img/c4wp-logo-full.png';
 		$settings_url      = method_exists( 'C4WP\\C4WP_Functions', 'c4wp_same_settings_for_all_sites' ) && C4WP_Functions::c4wp_same_settings_for_all_sites() ? network_admin_url( 'admin.php?page=c4wp-admin-settings' ) : admin_url( 'admin.php?page=c4wp-admin-settings' );
+
+		$form_fields_result  = array_filter( $fields, function( $key ) {
+			if ( $key == 'enabled_forms_title' || $key == 'enabled_forms_subtitle' || $key == 'enabled_forms_cf7' || $key == 'enabled_forms_wpf'|| $key == 'enabled_forms_gf' || $key == 'enabled_forms_ninja' || $key == 'enabled_forms_formidable' || $key == 'enabled_forms_fluent'|| $key == 'enabled_forms_everest' ) {
+				return false;
+			} else {
+				return strpos( $key, 'enabled_forms' ) === 0;
+			}
+		 }, ARRAY_FILTER_USE_KEY);
+
+		$form_fields_keys = array_keys( $form_fields_result );
+		asort( $form_fields_keys );
+		$forms_markup = '';
+
+		foreach ( $form_fields_keys as $field_key ) {
+			$forms_markup .= '<p class="c4wp-wizard-checkbox"><strong>' . $fields[ $field_key ]['label'] . '</strong>
+			<span>' . self::callback( $fields[ $field_key ], true ) . '</span></p>	';
+		}
+
+		$contact_forms_text = sprintf(
+			/* translators:knowlegdebase link */
+			__( 'Please refer to the %1$s for more information on how to add CAPTCHA checks from our plugin on forms created with Contact Form 7, Gravity Forms, Ninja Forms, Everest Forms, Formidable Forms and more.', 'advanced-nocaptcha-recaptcha' ),
+			sprintf(
+				'<a href="https://melapress.com/support/kb/adding-captcha-contact-form-7-forms/?utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp" target="_blank">' . esc_html__( 'CAPTCHA 4WP knowledge base', 'advanced-nocaptcha-recaptcha' ) . '</a>'
+			)
+		);
+
 		$intro_content     = '
 		<div class="c4wp-wizard-panel" id="c4wp-setup-wizard-intro">
 			<div class="c4wp-panel-content">
@@ -1317,7 +1514,7 @@ class C4WP_Settings {
 		</div>
 		';
 		$back_to_intro     = '<a data-wizard-goto href="#c4wp-setup-wizard-intro" class="button button-secondary">' . esc_html__( 'Back', 'advanced-nocaptcha-recaptcha' ) . '</a>';
-		$method_select_upgrade_message = ( ! isset( C4WP_Method_Loader::$methods[ 'hcaptcha' ] ) ) ? '<p>Do you want to use hCaptcha or Cloudflare Turnstile for your website CAPTCHA? <a href="https://melapress.com/wordpress-captcha/pricing/?&utm_source=plugins&utm_medium=link&utm_campaign=c4wp" target="_blank">Upgrade to Business plan.</a></p>' : '';
+		$method_select_upgrade_message = ( ! isset( C4WP_Method_Loader::$methods[ 'hcaptcha' ] ) ) ? '<p>Do you want to use hCaptcha or Cloudflare Turnstile for your website CAPTCHA? <a href="https://melapress.com/wordpress-captcha/pricing/?&utm_source=plugins&utm_medium=link&utm_campaign=c4wp" target="_blank">Upgrade to Enterprise plan.</a></p>' : '';
 
 		$markup = '
 			<div id="c4wp-setup-wizard-content">
@@ -1346,7 +1543,7 @@ class C4WP_Settings {
 						</div>
 						<div id="key-validation-step-2" class="hidden">
 							<strong style="position: absolute; font-size: 16px">' . esc_html__( 'Step 3 - Validation and saving', 'advanced-nocaptcha-recaptcha' ) . '</strong>
-							<p>' . esc_html__( 'Use the response from your CAPTCHA input, we can validate your security key', 'advanced-nocaptcha-recaptcha' ) . '</p>
+							<p>' . esc_html__( 'Using the response from your CAPTCHA input, we can validate your security key', 'advanced-nocaptcha-recaptcha' ) . '</p>
 							<p>' . $fields['secret_key']['label'] . '
 							' . self::callback( $fields['secret_key'], true ) . '</p>
 							<p><div id="secret_key_validation_feedback"></div></p>
@@ -1361,7 +1558,7 @@ class C4WP_Settings {
 				</div>
 				<div class="c4wp-wizard-panel" id="c4wp-setup-wizard-v3-fallback">
 					<div class="c4wp-panel-content">
-						<strong>' . esc_html__( 'Step 3: Configure a failover action for reCAPTCHA v3 failure', 'advanced-nocaptcha-recaptcha' ) . '</strong>
+						<strong>' . esc_html__( 'Step 4: Configure a failover action for reCAPTCHA v3 failure', 'advanced-nocaptcha-recaptcha' ) . '</strong>
 						<p class="description c4wp-desc" style="position: absolute;">' . esc_html__( 'reCAPTCHA v3 is fully automated. This means that by default, if the CAPTCHA check fails the website visitor cannot proceed with what they are doing unless you configure a failover action. Use the below setting to configure the failover action.', 'advanced-nocaptcha-recaptcha' ) . '</p>
 						<p>' . $fields['failure_action']['label'] . '
 						' . self::callback( $fields['failure_action'], true ) . '</p>	
@@ -1380,6 +1577,16 @@ class C4WP_Settings {
 					<a href="#c4wp-cancel-wizard" class="button button-secondary">' . esc_html__( 'Cancel', 'advanced-nocaptcha-recaptcha' ) . '</a>
 				</div>
 				<div class="c4wp-wizard-panel" id="c4wp-setup-wizard-additional-settings">
+					<div class="c4wp-panel-content">
+						<strong>' . esc_html__( 'Choose which forms to protect', 'advanced-nocaptcha-recaptcha' ) . '</strong>
+						<p class="description c4wp-desc" style="position: absolute;">' . esc_html__( "Here you can choose which forms to begin protected with your chosen CAPTCHA method.", 'advanced-nocaptcha-recaptcha' ) . '</p>
+						'. $forms_markup .'
+						'. $contact_forms_text .'
+					</div>
+					<a data-wizard-goto href="#c4wp-setup-wizard-finish" class="button button-primary">' . esc_html__( 'Next', 'advanced-nocaptcha-recaptcha' ) . '</a>
+					<a href="#c4wp-cancel-wizard" class="button button-secondary">' . esc_html__( 'Cancel', 'advanced-nocaptcha-recaptcha' ) . '</a>
+				</div>
+				<div class="c4wp-wizard-panel" id="c4wp-setup-wizard-finish">
 					<div class="c4wp-panel-content">
 						<strong>' . esc_html__( 'All done - you can now add CAPTCHA checks to your website', 'advanced-nocaptcha-recaptcha' ) . '</strong>
 						<p class="description c4wp-desc" style="position: absolute;">' . esc_html__( "Now that your chosen CAPTCHA service is fully integrated you can use the optional settings to fine-tune CAPTCHA to your requirements.", 'advanced-nocaptcha-recaptcha' ) . '</p>		
@@ -1405,6 +1612,16 @@ class C4WP_Settings {
 		$failure_action  = trim( C4WP_Functions::c4wp_get_option( 'failure_action' ) );
 		$reset_nonce     = wp_create_nonce( 'reset_captcha_nonce' );
 
+		$captcha_labels = array( 
+			'v2_checkbox' => esc_html__( 'V2 Checkbox', 'advanced-nocaptcha-recaptcha' ),
+			'v2_invisble' => esc_html__( 'V2 Invisible CAPTCHA', 'advanced-nocaptcha-recaptcha' ),
+			'v3' 		  => esc_html__( 'V3 Invisible CAPTCHA', 'advanced-nocaptcha-recaptcha' ),
+			'hcaptcha' 	  => esc_html__( 'hCaptcha', 'advanced-nocaptcha-recaptcha' ),
+			'cloudflare'  => esc_html__( 'Cloudflare Turnstile', 'advanced-nocaptcha-recaptcha' ),
+		);
+
+		$captcha_label = isset( $captcha_labels[ $captcha_version ] ) ? $captcha_labels[ $captcha_version ] : $captcha_version;
+
 		if ( $site_key && $secret_key ) {
 			$markup = '
 				<br><a href="#" id="launch-c4wp-wizard" class="button button-primary">' . esc_html__( 'Reconfigure CAPTCHA integration', 'advanced-nocaptcha-recaptcha' ) . '</a> <a href="#" id="reset-c4wp-config" class="button button-secondary" data-nonce="' . esc_attr( $reset_nonce ) . '">' . esc_html__( 'Remove CAPTCHA integration', 'advanced-nocaptcha-recaptcha' ) . '</a>
@@ -1417,7 +1634,7 @@ class C4WP_Settings {
 						<th scope="row">Current CAPTCHA configuration:</th>
 						<td>';
 							$markup .= '<div class="c4wp-current-setup">';
-							$markup .= '<p><span>' . esc_html__( 'CAPTCHA version:', 'advanced-nocaptcha-recaptcha' ) . '</span><strong>' . $captcha_version . '</strong></p>';
+							$markup .= '<p><span>' . esc_html__( 'CAPTCHA version:', 'advanced-nocaptcha-recaptcha' ) . '</span><strong>' . $captcha_label . '</strong></p>';
 							$markup .= '<p><span>' . esc_html__( 'Site key:', 'advanced-nocaptcha-recaptcha' ) . '</span><strong>' . $site_key . '</strong></p>';
 							$markup .= '<p><span>' . esc_html__( 'Secret key:', 'advanced-nocaptcha-recaptcha' ) . '</span><strong>' . $secret_key . '</strong></p>';
 			if ( 'v3' === $captcha_version ) {
@@ -1516,8 +1733,69 @@ class C4WP_Settings {
 
 	public static function add_delete_data_settings( $fields ) {
 		$additonal_hide_fields = array(
+			'disable_submit_title'  => array(
+				'section_id' => 'settings',
+				'sub_section' => 'general_settings',
+				'type'       => 'html',
+				'class'      => 'wrap-around-content',
+				'label'      => sprintf(
+					'<strong style="position: absolute;">%1$s</strong>',
+					esc_html__( 'Disable submit button untill CAPTCHA response is provided?', 'advanced-nocaptcha-recaptcha' )
+				),
+			),
+			'disable_submit_subtitle' => array(
+				'section_id' => 'settings',
+				'sub_section' => 'general_settings',
+				'type'       => 'html',
+				'class'      => 'wrap-around-content',
+				'label'      => sprintf(
+					'<p class="description c4wp-desc" style="position: absolute;">%1$s</p>',
+					esc_html__( 'When using a visible CAPTCHA method that requires users\' interaction, should the plugin disable the submit button until the CAPTCHA challenge is completed?', 'advanced-nocaptcha-recaptcha' )
+				),
+			),
+			'disable_submit'           => array(
+				'label'      => esc_html__( 'Disable submit button', 'advanced-nocaptcha-recaptcha' ),
+				'section_id' => 'settings',
+				'sub_section' => 'general_settings',
+				'std'        => 0,
+				'type'       => 'checkbox',
+				'class'      => 'checkbox',
+			),
+			'pass_on_no_captcha_found_title'  => array(
+				'section_id' => 'settings',
+				'sub_section' => 'general_settings',
+				'type'       => 'html',
+				'class'      => 'wrap-around-content',
+				'label'      => sprintf(
+					'<strong style="position: absolute;">%1$s</strong>',
+					esc_html__( 'Should CAPTCHA 4WP pass or fail a submission if no CAPTCHA field is found?', 'advanced-nocaptcha-recaptcha' )
+				),
+			),
+			'pass_on_no_captcha_found_subtitle' => array(
+				'section_id' => 'settings',
+				'sub_section' => 'general_settings',
+				'type'       => 'html',
+				'class'      => 'wrap-around-content',
+				'label'      => sprintf(
+					'<p class="description c4wp-desc" style="position: absolute;">%1$s</p>',
+					esc_html__( 'If a form is passed through our plugin for verification and no CAPTCHA field is present, you can choose to either allow the submission or return a failure.', 'advanced-nocaptcha-recaptcha' )
+				),
+			),
+			'pass_on_no_captcha_found'   => array(
+				'label'      => esc_html__( 'How to handle failed submissions', 'advanced-nocaptcha-recaptcha' ),
+				'section_id' => 'settings',
+				'sub_section' => 'general_settings',
+				'type'       => 'radio',
+				'class'      => 'regular remove-space-below remove-radio-br',
+				'std'        => 'proceed',
+				'options'    => array(
+					'proceed' => esc_html__( 'Proceed with submission', 'advanced-nocaptcha-recaptcha' ),
+					'fail'    => esc_html__( 'Fail submission', 'advanced-nocaptcha-recaptcha' ),
+				),
+			),
 			'delete_data_subtitle'  => array(
-				'section_id' => 'forms',
+				'section_id' => 'settings',
+				'sub_section' => 'general_settings',
 				'type'       => 'html',
 				'class'      => 'wrap-around-content',
 				'label'      => sprintf(
@@ -1527,7 +1805,8 @@ class C4WP_Settings {
 			),
 			'delete_data_enable'           => array(
 				'label'      => esc_html__( 'Delete data', 'advanced-nocaptcha-recaptcha' ),
-				'section_id' => 'forms',
+				'section_id' => 'settings',
+				'sub_section' => 'general_settings',
 				'std'        => 0,
 				'type'       => 'checkbox',
 				'class'      => 'checkbox',

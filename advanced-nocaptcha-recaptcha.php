@@ -3,12 +3,12 @@
 /**
  * CAPTCHA 4WP
  *
- * @copyright Copyright (C) 2013-2023, Melapress - support@melapress.com
+ * @copyright Copyright (C) 2013-2024, Melapress - support@melapress.com
  * @license   http://www.gnu.org/licenses/gpl-3.0.html GNU General Public License, version 3 or higher
  *
  * @wordpress-plugin
  * Plugin Name: CAPTCHA 4WP
- * Version:     7.3.1
+ * Version:     7.5.0
  * Plugin URI:  https://melapress.com/wordpress-captcha/
  * Description: Easily add Google reCAPTCHA to WordPress forms. Upgrade to Premium and gain access to additional features, including hCaptcha and CloudFlare Turnstile integration, CAPTCHA one-click form integration with plugins such as WooCommerce, Contact Form 7, and WP Forms, and many other features.
  * Author:      Melapress
@@ -17,8 +17,8 @@
  * Domain Path: /languages/
  * License:     GPL v3
  * Requires at least: 5.0
- * WC tested up to: 6.3.0
- * Requires PHP: 7.2
+ * WC tested up to: 8.0.0
+ * Requires PHP: 7.4
  * Network: true
  *
  *
@@ -59,15 +59,6 @@ class C4WP {
 	 * Class constructor.
 	 */
 	private function __construct() {
-
-
-		/* @free:start */
-		if ( is_plugin_active( 'advanced-nocaptcha-and-invisible-captcha-pro/advanced-nocaptcha-and-invisible-captcha-pro.php' ) ) {
-			deactivate_plugins( 'advanced-nocaptcha-recaptcha/advanced-nocaptcha-recaptcha.php' );
-			return;
-		}
-		/* @free:end */
-
 		$this->constants();
 		$this->includes();
 		$this->actions();
@@ -91,11 +82,25 @@ class C4WP {
 	 * @return void
 	 */
 	private function constants() {
-		define( 'C4WP_PLUGIN_VERSION', '7.3.1' );
-		define( 'C4WP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-		define( 'C4WP_PLUGIN_URL', plugins_url( '/', __FILE__ ) );
-		define( 'C4WP_PLUGIN_FILE', __FILE__ );
-		define( 'C4WP_TABLE_PREFIX', 'c4wp_' );
+		if ( ! defined( 'C4WP_PLUGIN_VERSION' ) ) {
+			define( 'C4WP_PLUGIN_VERSION', '7.5.0' );
+		}
+		if ( ! defined( 'C4WP_PLUGIN_DIR' ) ) {
+			define( 'C4WP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+		}
+		if ( ! defined( 'C4WP_PLUGIN_URL' ) ) {
+			define( 'C4WP_PLUGIN_URL', plugins_url( '/', __FILE__ ) );
+		}
+		if ( ! defined( 'C4WP_PLUGIN_FILE' ) ) {
+			define( 'C4WP_PLUGIN_FILE', __FILE__ );
+		}
+		if ( ! defined( 'C4WP_TABLE_PREFIX' ) ) {
+			define( 'C4WP_TABLE_PREFIX', 'c4wp_' );
+		}
+		if ( ! defined( 'C4WP_BASE_NAME' ) ) {
+			define( 'C4WP_BASE_NAME', plugin_basename( __FILE__ ) );
+		}
+
 		register_uninstall_hook( C4WP_PLUGIN_FILE, 'c4wp_uninstall' );
 	}
 
@@ -129,6 +134,7 @@ class C4WP {
 		add_action( 'init', array( 'C4WP\\C4WP_Functions', 'actions' ) );
 		add_action( 'init', array( 'C4WP\\C4WP_Functions', 'c4wp_plugin_update' ), -15 );
 		add_action( 'login_enqueue_scripts', array( 'C4WP\\C4WP_Functions', 'c4wp_login_enqueue_scripts' ) );
+		add_filter( 'plugin_action_links_' . C4WP_BASE_NAME, array( 'C4WP\\C4WP_Functions', 'add_plugin_shortcuts' ), 999, 1 );
 
 	}
 }
@@ -248,3 +254,24 @@ if ( ! function_exists( 'c4wp_verify_captcha' ) ) {
 		return false;
 	}
 }
+
+if ( ! function_exists( 'anr_verify_captcha' ) ) {
+	function anr_verify_captcha( $response = false ) {
+		if ( class_exists( 'C4WP\C4WP_Functions' ) ) {
+			return C4WP\C4WP_Functions::c4wp_verify_captcha( $response );
+		}
+		return false;
+	}
+}
+
+
+/* @free:start */
+if ( ! function_exists( 'c4wp_free_on_plugin_activation' ) ) {
+	function c4wp_free_on_plugin_activation( $response = false ) {
+		if ( is_plugin_active( 'advanced-nocaptcha-and-invisible-captcha-pro/advanced-nocaptcha-and-invisible-captcha-pro.php' ) ) {
+			deactivate_plugins( 'advanced-nocaptcha-and-invisible-captcha-pro/advanced-nocaptcha-and-invisible-captcha-pro.php' );
+		}
+	}
+}
+register_activation_hook( __FILE__, 'c4wp_free_on_plugin_activation' );
+/* @free:end */

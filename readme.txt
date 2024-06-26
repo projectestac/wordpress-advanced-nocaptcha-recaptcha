@@ -3,11 +3,11 @@ Contributors: Melapress
 Plugin URI: https://melapress.com/wordpress-captcha/
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl.html
-Tags: recaptcha, nocaptcha, hcaptcha, cloudflare turnstile, captcha, invisible captcha, spam protection, captcha for WooCommerce, forms captcha
+Tags: recaptcha, recaptcha, hcaptcha, cloudflare turnstile, antispam protection, captcha for WooCommerce
 Requires at least: 5.0
-Tested up to: 6.3.1
-Stable tag: 7.3.1
-Requires PHP: 7.2.0
+Tested up to: 6.5.2
+Stable tag: 2.5.0
+Requires PHP: 7.4.0
 
 Use CAPTCHA to stop spam and allow customers & users to interact with your website easily. Block fake accounts and orders. Avoid false positives.
 
@@ -18,9 +18,15 @@ Use CAPTCHA to stop spam and allow customers & users to interact with your websi
 Protect your WordPress forms and login pages from spam and automated attacks with [CAPTCHA 4WP](https://melapress.com/wordpress-captcha/?utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp). Choose from multiple ReCAPTCHA versions and strike the right balance between security and user experience.
 
 
-[Features](https://melapress.com/wordpress-captcha/features/?utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp) | [14-Day Premium Trial](https://melapress.com/wordpress-captcha/plugin-trial/?utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp) | [Getting Started](https://melapress.com/support/kb/captcha-4wp-getting-started/?utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp)
+[Features](https://melapress.com/wordpress-captcha/features/?utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp) | [Get the Premium!](https://melapress.com/wordpress-captcha/pricing/?utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp) | [Getting Started](https://melapress.com/support/kb/captcha-4wp-getting-started/?utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp)
 
-Use the CAPTCHA 4WP plugin to add CAPTCHA checks to WordPress forms and logins. Choose from V2 (I’m not a robot), V2 Invisible, and V3 noCAPTCHA to ensure the best user experience at all times without compromosing security. Avoid false positives falling through the crack with V3 failover to ensure humans can still pass the test even if the result comes back below the passmark.
+Use the CAPTCHA 4WP plugin to add CAPTCHA checks to WordPress forms and logins. Choose from any of the below Google reCAPTCHA methods to ensure the best user experience at all times without compromosing security. Avoid false positives falling through the crack with V3 failover to ensure humans can still pass the test even if the result comes back below the passmark:
+
+-	V2 (I’m not a robot)
+-	2 Invisible
+-	V3 noCAPTCHA 
+
+Would you like to us a GDPR complaint CAPTCHA service such as hCaptcha and Cloudflare Turnstile? [Get the Premium plugin](https://melapress.com/wordpress-captcha/pricing/?utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp).
 
 #### MAINTAINED & SUPPORTED BY MELAPRESS
 
@@ -30,7 +36,7 @@ Browse our list of [WordPress security and administration plugins](https://melap
   
 ### CAPTCHA 4WP key plugin features and capabilities
 - Add CAPTCHA to WordPress native forms such as login pages, user registration and comments forms etc
-- Supports multiple ReCAPTCHA versions
+- Supports multiple Google ReCAPTCHA versions
 - User-friendly wizards for easy, hassle-free setup
 - Set ReCAPTCHA V3 passmark score 
 - ReCAPTCHA failover configuration (ensure no prospect is incorrectly marked as spam)
@@ -44,8 +50,9 @@ With the premium edition of CAPTCHA 4WP, you can choose from a wider range of CA
 ### Premium features list
 
 -   Everything in the free version
--   Add CAPTCHA from hCaptcha and Cloudflare Turnstile on your websites
--   CAPTCHA checks text, visual and position customization options
+-   Add CAPTCHA from hCaptcha and Cloudflare Turnstile on your websites, both free and GDPR compliant
+-	Add Geoblocking on forms and WordPress comments form (block / limit form submissions or comment posting by country)
+-   Customization options for the CAPTCHA checks text, visual and position on the forms
 -   One-click integration with WooCommerce
 -   One-click integration with Contact Form 7, Gravity Forms, WPForms, BuddyPress & other plugins
 -   Much more
@@ -124,54 +131,31 @@ Simply select the WooCommerce page you want to add CAPTCHA to in the plugin's CA
 
 == Changelog ==
 
-= 7.3.1 (08142023) =
+= 7.5.0 (20240319) =
 
-* **Improvements**
-	* Improved help text and prompts for better user experience when setting up the plugin.
+Version 7.5.0 introduces several enhancements and new features to improve the functionality and user experience of the plugin:
 
-* **Bug fixes**
-	* Fixed fatal error related to a non-static method when using a custom login form.
-	* Fixed PHP warning when updating the plugin due to and SDK location update.
+**New Features:**
 
-= 7.3.0 (08092023) =
+* Geoblocking for forms: Block submission of forms or comments based on countries (Premium).    
+- Geoblocking for Wordpress comments: Block comments, send comments to spam, mark comments for moderation based on the country of origin (Premium).
 
-* **New features & functionality**
-	* Added two new captcha methods - hCaptcha (Always Challenge) and Cloudflare Turnstile.
-	* Added a new setting to purge the plugin's database files on plugin uninstall.
+**Improvements:**
 
-* **Improvements**
-	* Improved licensing and activation mechanism on Multisite networks - admin is now able to choose to enable CAPTCHA at network lever or on individual subsites.
-	* Adding further help text for 3rd party form plugins and the new captcha providers.
-	* Improved help text and settings messages within admin pages & wizards.
-	* Improved wizard UI/UX and added logic to validate better site keys and secret keys used in captcha configurations.
-	* Improved build infrastructure by refactoring code to a more modular approach.
+* The "Settings & Placements" page has been redesigned for a more spacious and visually pleasing appearance. 
+- Additional wizard configuration steps have been implemented to allow users to easily activate captcha when setting up the plugin.    
+- Applied enhanced labeling and terminology throughout the plugin, also addressing some grammar issues.    
+- Internal links within the plugin have been adjusted, including updates to URLs directing users to the new pricing page.    
+- Introduced an option to enable Signup form protection on multisite installations.    
+- Notices for site administrators in multisite networks have been improved for clarity.    
+- Updated the minimum required PHP version for the plugin from 7.2 to 7.4 to ensure compatibility with current standards.  
 
-* **Bug fixes**
-	* V3: Fixed a JS error which can prevent users from submitting a payment while checking out on WooCommerce.
-	* V3 + BuddyPress - Fixed a JS problem which was sometime preventing users form adding new groups.
-	* V3: fixed an error which was preventing users from logging in on the Checkout page (WooCoommerce).
-	* V3 - V2 failback - Fixed an error that was causing captcha challenge to not prompt for users trying to log in via the Checkout page (woocommerce).
-	* V3 - V2 failback - Fixed an error that was preventing users from adding a new group (Buddypress).
-	* V3 - V2 failback - Fixed an error that was preventing the captcha challenge from showing up when there was a false positive (Buddypress registration form).
-	* V3 - V2 failback - Fixed an error that was preventing users from posting new comments or replies (Buddypress Comments form).
-	* V2 Invisible - Fixed an error that was preventing users from posting new comments and replies (Buddypress Comments form).
-	* V2 Checkbox - Fixed a JS error that was causing the users to be able to comment without solving the captcha challenge (Buddypress Comments form).
-	* Fixed some edge case problems with the licensing system when the license was disconnected and reconnected from the plugin.
-	* Fixed a problem with a plugin setting which was causing Users and Roles not to be properly excluded from captcha.
-	* V3 - V2 failback - Fixed some JS errors which were preventing users from paying using Paypal and Stripe payment gateways.
-	* Contact Form 7: V3 - V2 failback - Fixed a small error that was preventing the CF7's form confirmation message from being hidden right away after submit.
-	* Fixed an error that could have caused a PHP fatal error when admin had settings enabled related to failed logins.
-	* V3 - V2 failback - Fixed an error that was preventing users from registering to the website via the WooComemrce form.
-	* V2 Invisible - Fixed an error that was preventing users from placing an order if the captcha position was "Above Checkout button".
-	* V2 Invisible - Fixed a JS error that could prevent users from creating new Buddypress groups.
-	* V2 - V2 Failback - Adjusted CSS for WordPress core forms in order to prevent the captcha box from getting out of frame.
-	* Fixed an edge case when the user was unable to log in if the captcha configuration was removed from the site.
-	* Fixed an edge case where a license expired notice message was showing when the captcha version was changed/reconfigured.
-	* Fixed some JS errors which were preventing V2 Invisible configurations from being set up in the wizard.
-	* Fixed some PHP errors which could trigger a fatal error once user downloads the system information file.
-	* Fixed the position of the third-party forms "how to" paragraphs in the Settings and Placements page.
-	* Fixed various JS errors which were preventing user from removing captcha configurations.
-	* Fixed WordPress notice in the previous version on the Plugins page - "Notice: Fix: error in PHP version 7.4".
-	* Fixed an edge case when installing Gravity Forms along with Captcha 4WP could cause a PHP error.
+**Bug Fixes:**
 
-Refer to the [CAPTCHA 4WP releases page](https://melapress.com/wordpress-captcha/releases/?utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp) for an over view of what is new and improved in every update of the plugin. Refer to the [CAPTCHA 4WP plugin changelog](https://melapress.com/support/kb/captcha-4wp-plugin-changelog/?utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp) for the complete detailed list of what was new, improved and fixed in previous version updates of CAPTCHA 4WP.
+- Resolved an edge case issue preventing login to sites using the WooCommerce login form.    
+- Corrected a minor CSS problem with the V2 Invisible method, preventing the captcha logo from appearing within the login form container.   
+- Fixed an edge case scenario where users could become stuck within the configuration wizard.    
+- Fixed a crash that could occur when the plugin was installed on site with PHP 7.2 or lower.
+
+Refer to the [CAPTCHA 4WP releases page](https://melapress.com/wordpress-captcha/releases/?&utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp) for an over view of what is new and improved in every update of the plugin. Refer to the [CAPTCHA 4WP plugin changelog](https://melapress.com/support/kb/captcha-4wp-plugin-changelog/?&utm_source=wp+repo&utm_medium=repo+link&utm_campaign=wordpress_org&utm_content=c4wp) for the complete detailed list of what was new, improved and fixed in previous version updates of CAPTCHA 4WP.
+
