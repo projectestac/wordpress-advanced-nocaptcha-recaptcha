@@ -152,6 +152,17 @@ if ( ! class_exists( 'C4WP_Functions' ) ) {
 		 */
 		public static function c4wp_get_option( $option, $default = '', $section = 'c4wp_admin_options' ) {
 
+			// XTEC ************ AFEGIT - Fill the recaptcha site key and secret key with the global values
+            // 2021.11.11 @aginard
+            if ($option === 'site_key') {
+                global $agora;
+                return $agora['recaptchapublickey'];
+            } elseif ($option === 'secret_key') {
+                global $agora;
+                return $agora['recaptchaprivatekey'];
+            }
+            // ************ FI
+
 			$get_site_options = is_multisite();
 
 			if ( $get_site_options ) {
